@@ -37,6 +37,7 @@ jobs:
           scanner: gitleaks
           target-type: repository
           workspace: .
+          log-level: debug
           
 
 
