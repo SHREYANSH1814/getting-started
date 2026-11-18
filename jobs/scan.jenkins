@@ -1,0 +1,134 @@
+pipeline {
+    agent any
+    environment {
+        HARNESS_DOMAIN     = 'https://qa0.harness.io'
+        HARNESS_ORG_ID     = 'shreyanshtesting'
+        HARNESS_PROJECT_ID = 'gettingstartedtesting'
+        HARNESS_ACCOUNT_ID = 'BdsgiWzwT7CQFeJl9XkQ3A'
+        HARNESS_TOKEN      = credentials('harness-token')
+    }
+    stages {
+
+        // Clone the STO Jenkins library before any scan stage.
+        stage('Checkout STO library') {
+            steps {
+                dir('sto-jenkins-lib') {
+                    deleteDir()
+                    sh '''
+                        git clone --depth 1 --branch main \
+                          https://github.com/harness/harness-sto-jenkins.git .
+                    '''
+                }
+            }
+        }
+
+        stage('Snyk') {
+            stages {
+                stage('Snyk SAST') {
+                    steps {
+                        withCredentials([
+                            string(credentialsId: 'snyk-access-token', variable: 'SCANNER_ACCESS_TOKEN'),
+                        ]) {
+                            script {
+                                def sto = load 'sto-jenkins-lib/lib/StoScan.groovy'
+                                sto.init(this)
+                                sto.run([
+                                    scanner    : 'snyk',
+                                    scanMode   : 'orchestration',
+                                    scanConfig : 'code',
+                                    targetType : 'repository',
+                                ])
+                            }
+                        }
+                    }
+                }
+
+                stage('Snyk Container') {
+                    steps {
+                        withCredentials([
+                            string(credentialsId: 'snyk-access-token', variable: 'SCANNER_ACCESS_TOKEN'),
+                        ]) {
+                            script {
+                                def sto = load 'sto-jenkins-lib/lib/StoScan.groovy'
+                                sto.init(this)
+                                sto.run([
+                                    scanner     : 'snyk',
+                                    scanMode    : 'orchestration',
+                                    scanConfig  : 'container',
+                                    targetType  : 'container',
+                                    imageName   : '<image-name>',
+                                    imageTag    : '<image-tag>',
+                                    imageDomain : 'docker.io',
+                                    imageType   : 'docker_v2',
+                                ])
+                            }
+                        }
+                    }
+                }
+
+                stage('Snyk IaC') {
+                    steps {
+                        withCredentials([
+                            string(credentialsId: 'snyk-access-token', variable: 'SCANNER_ACCESS_TOKEN'),
+                        ]) {
+                            script {
+                                def sto = load 'sto-jenkins-lib/lib/StoScan.groovy'
+                                sto.init(this)
+                                sto.run([
+                                    scanner    : 'snyk',
+                                    scanMode   : 'orchestration',
+                                    scanConfig : 'iac',
+                                    targetType : 'repository',
+                                ])
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('SonarQube') {
+            stages {
+                stage('SonarQube SAST') {
+                    steps {
+                        withCredentials([
+                            string(credentialsId: 'sonar-access-token', variable: 'SCANNER_ACCESS_TOKEN'),
+                            string(credentialsId: 'sonar-domain', variable: 'SCANNER_DOMAIN'),
+                        ]) {
+                            script {
+                                def sto = load 'sto-jenkins-lib/lib/StoScan.groovy'
+                                sto.init(this)
+                                sto.run([
+                                    scanner          : 'sonarqube',
+                                    scanMode         : 'orchestration',
+                                    scanConfig       : 'default',
+                                    targetType       : 'repository',
+                                    scannerVerifySsl : 'true',
+                                ])
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Gitleaks') {
+            stages {
+                stage('Gitleaks Secrets') {
+                    steps {
+                        script {
+                            def sto = load 'sto-jenkins-lib/lib/StoScan.groovy'
+                            sto.init(this)
+                            sto.run([
+                                scanner    : 'gitleaks',
+                                scanMode   : 'orchestration',
+                                scanConfig : 'default',
+                                targetType : 'repository',
+                            ])
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
