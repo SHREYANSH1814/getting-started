@@ -24,19 +24,7 @@ jobs:
         with:
           ref: main
 
-      - name: Snyk SCA
-        id: sto-snyk-sca
-        uses: harness/github-actions/security-scan@2.0.0
-        with:
-          harness-domain: ${{ inputs.harness-domain }}
-          harness-org-id: ${{ inputs.harness-org-id }}
-          harness-project-id: ${{ inputs.harness-project-id }}
-          harness-token: ${{ secrets.HARNESS_TOKEN }}
-          scan-config: oss
-          scan-mode: orchestration
-          scanner: snyk
-          scanner-access-token: ${{ secrets.SNYK_ACCESS_TOKEN }}
-          target-type: repository
+    
 
       - name: Snyk Container
         id: sto-snyk-container
