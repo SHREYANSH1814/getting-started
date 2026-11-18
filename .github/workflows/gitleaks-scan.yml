@@ -36,8 +36,7 @@ jobs:
           scan-mode: orchestration
           scanner: gitleaks
           target-type: repository
-          workspace: .
-          log-level: debug
+         
           
 
 
