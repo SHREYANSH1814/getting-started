@@ -1,0 +1,86 @@
+name: Security Scan
+on:
+  workflow_dispatch:
+    inputs:
+      harness-org-id:
+        description: 'Harness Organization ID'
+        required: true
+        type: string
+      harness-project-id:
+        description: 'Harness Project ID'
+        required: true
+        type: string
+      harness-domain:
+        description: 'Harness domain (e.g., https://app.harness.io)'
+        required: false
+        type: string
+        default: 'https://app.harness.io'
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Snyk SCA
+        id: sto-snyk-sca
+        uses: harness/github-actions/security-scan@2.0.0
+        with:
+          harness-domain: ${{ inputs.harness-domain }}
+          harness-org-id: ${{ inputs.harness-org-id }}
+          harness-project-id: ${{ inputs.harness-project-id }}
+          harness-token: ${{ secrets.HARNESS_TOKEN }}
+          scan-config: oss
+          scan-mode: orchestration
+          scanner: snyk
+          scanner-access-token: ${{ secrets.SNYK_ACCESS_TOKEN }}
+          target-type: repository
+
+      - name: Snyk Container
+        id: sto-snyk-container
+        uses: harness/github-actions/security-scan@2.0.0
+        with:
+          harness-domain: ${{ inputs.harness-domain }}
+          harness-org-id: ${{ inputs.harness-org-id }}
+          harness-project-id: ${{ inputs.harness-project-id }}
+          harness-token: ${{ secrets.HARNESS_TOKEN }}
+          image-domain: docker.io
+          image-name: johnkday/nodegoat
+          image-tag: latest
+          image-type: docker_v2
+          scan-config: container
+          scan-mode: orchestration
+          scanner: snyk
+          scanner-access-token: ${{ secrets.SNYK_ACCESS_TOKEN }}
+          target-type: container
+
+      - name: Snyk SAST
+        id: sto-snyk-sast
+        uses: harness/github-actions/security-scan@2.0.0
+        with:
+          harness-domain: ${{ inputs.harness-domain }}
+          harness-org-id: ${{ inputs.harness-org-id }}
+          harness-project-id: ${{ inputs.harness-project-id }}
+          harness-token: ${{ secrets.HARNESS_TOKEN }}
+          scan-config: code
+          scan-mode: orchestration
+          scanner: snyk
+          scanner-access-token: ${{ secrets.SNYK_ACCESS_TOKEN }}
+          target-type: repository
+
+      - name: Snyk IaC
+        id: sto-snyk-iac
+        uses: harness/github-actions/security-scan@2.0.0
+        with:
+          harness-domain: ${{ inputs.harness-domain }}
+          harness-org-id: ${{ inputs.harness-org-id }}
+          harness-project-id: ${{ inputs.harness-project-id }}
+          harness-token: ${{ secrets.HARNESS_TOKEN }}
+          scan-config: iac
+          scan-mode: orchestration
+          scanner: snyk
+          scanner-access-token: ${{ secrets.SNYK_ACCESS_TOKEN }}
+          target-type: repository
+
