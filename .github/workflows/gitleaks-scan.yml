@@ -50,7 +50,6 @@ jobs:
           scanner: sonarqube
           scanner-access-token: ${{ secrets.SONAR_ACCESS_TOKEN }}
           scanner-domain: ${{ secrets.SONAR_DOMAIN }}
-          scanner-verify-ssl: true
           target-type: repository          
 
 
