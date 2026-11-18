@@ -36,6 +36,24 @@ jobs:
           scan-mode: orchestration
           scanner: gitleaks
           target-type: repository
+
+      - name: SonarQube SAST
+        id: sto-sonarqube-sast
+        uses: harness/github-actions/security-scan@2.0.0
+        with:
+          harness-domain: ${{ inputs.harness-domain }}
+          harness-org-id: ${{ inputs.harness-org-id }}
+          harness-project-id: ${{ inputs.harness-project-id }}
+          harness-token: ${{ secrets.HARNESS_TOKEN }}
+          scan-config: default
+          scan-mode: orchestration
+          scanner: sonarqube
+          scanner-access-token: ${{ secrets.SONAR_ACCESS_TOKEN }}
+          scanner-domain: ${{ secrets.SONAR_DOMAIN }}
+          scanner-verify-ssl: true
+          target-type: repository          
+
+
          
           
 
